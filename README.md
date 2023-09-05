@@ -2,7 +2,7 @@
 
 ## The Name
 
-Byte-by-Byte is BbB in short, where can be further abberivated into `b^3`, where the name `b-cube` comes from.
+Byte-by-Byte is BbB in short, where can be further abberivated into `b^3`, where the name `b-cube` comes from. This is a protocol inspired by a protocol in labs of EECS 473 at University of Michigan.
 
 ## The Protocol
 
