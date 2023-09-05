@@ -6,6 +6,19 @@ use heapless::Vec;
 #[repr(transparent)]
 pub struct TypeId(pub u8);
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Packet<const CAPACITY: usize>(pub TypeId, pub Vec<u8, CAPACITY>);
+
+impl<const CAPACITY: usize> Packet<CAPACITY> {
+    #[allow(non_upper_case_globals)]
+    pub fn try_from_bytes<const SoP: u8, const EoP: u8>(
+        id: TypeId,
+        bytes: &[u8],
+    ) -> Result<Self, ()> {
+        Ok(Self(id, Vec::from_slice(bytes)?))
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Error {
     MissingSoP,
@@ -19,7 +32,7 @@ pub enum State<const CAPACITY: usize> {
     Started,
     Sized(u8),
     Typed(u8, TypeId, Vec<u8, CAPACITY>),
-    Succeeded(TypeId, Vec<u8, CAPACITY>),
+    Succeeded(Packet<CAPACITY>),
 }
 
 #[allow(non_upper_case_globals)]
@@ -66,7 +79,7 @@ impl<const SoP: u8, const EoP: u8, const CAPACITY: usize> Receiver<SoP, EoP, CAP
                     buffer.push(byte).unwrap();
                     Ok(())
                 } else if byte == EoP {
-                    self.state = State::Succeeded(*id, buffer.clone());
+                    self.state = State::Succeeded(Packet(*id, buffer.clone()));
                     Ok(())
                 } else {
                     Err(Error::MissingEoP)
@@ -77,9 +90,9 @@ impl<const SoP: u8, const EoP: u8, const CAPACITY: usize> Receiver<SoP, EoP, CAP
     }
 
     #[inline]
-    pub fn packet(&self) -> Option<(TypeId, &[u8])> {
+    pub fn packet(&self) -> Option<&Packet<CAPACITY>> {
         match &self.state {
-            State::Succeeded(id, buffer) => Some((*id, buffer)),
+            State::Succeeded(packet) => Some(packet),
             _ => None,
         }
     }
